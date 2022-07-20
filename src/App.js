@@ -1,36 +1,58 @@
-import React, { Component } from 'react';
-import Ideas from './Ideas';
-import Form from './Form';
-import './App.css';
+import React, { useState, useEffect, useReducer } from "react";
+import Ideas from "./Ideas";
+import Form from "./Form";
+import ThemeContext from "./ThemeContext";
+import "./App.css";
 
-class App extends Component {
-  constructor() {
-    super();
-    this.state = {
-      ideas: [
-      ]
-    }
+const initialState = {
+  ideas: [],
+  theme: "light",
+};
+const reducer = (state, action) => {
+  switch (action.type) {
+    case "TOGGLE_THEME":
+      const newTheme = state.theme === "light" ? "dark" : "light";
+      return { ...state, theme: newTheme };
+    case "ADD_IDEA":
+      return { ...state, ideas: [...state.ideas, action.idea] };
+    case "REMOVE_IDEA":
+      const filteredIdeas = state.ideas.filter((idea) => idea.id !== action.id);
+      return { ...state, idea: filteredIdeas };
+    default:
+      return state;
   }
+};
+function App() {
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-  addIdea = (newIdea) => {
-    this.setState({ ideas: [...this.state.ideas, newIdea] });
-  }
+  useEffect(() => {
+    document.title = `IdeaBox (${state.ideas.length})`;
+  });
 
-  deleteIdea = (id) => {
-    const filteredIdeas = this.state.ideas.filter(idea => idea.id !== id);
+  const addIdea = (newIdea) => {
+    const action = { type: "ADD_IDEA", idea: newIdea };
+    dispatch(action);
+  };
+  const deleteIdea = (id) => {
+    const action = { type: "REMOVE_IDEA", id };
+    dispatch(action);
+  };
 
-    this.setState({ ideas: filteredIdeas });
-  }
+  const toggleTheme = () => {
+    const action = { type: "TOGGLE_THEME" };
+    dispatch(action);
+  };
 
-  render() {
-    return(
-      <main className='App'>
+  return (
+    <ThemeContext.Provider value={state.theme}>
+      <main className="App">
         <h1>IdeaBox</h1>
-        <Form addIdea={this.addIdea} />
-        <Ideas ideas={this.state.ideas} deleteIdea={this.deleteIdea} />
+        <button onClick={toggleTheme}>Change</button>
+        <Form addIdea={addIdea} />
+        <Ideas ideas={state.ideas} deleteIdea={deleteIdea} />
       </main>
-    )
-  }
+    </ThemeContext.Provider>
+  );
 }
 
 export default App;
